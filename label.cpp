@@ -20,12 +20,10 @@ void usage() {
 void test_queue();
 void clean(unsigned char ***input,unsigned char **gray,unsigned char **binary, int **labeled_image,int height , int width);
 //--- TODO: you complete the rest --- CHECKPOINT 0
-
-
-
-
-
-
+void rgb2gray(unsigned char ***in,unsigned char **out,int height,int width);
+void gray2binary(unsigned char **in,unsigned char **out,int height,int width);
+int component_labeling(unsigned char **binary_image,int **label,int height,int width);
+void label2RGB(int  **labeled_image, unsigned char ***rgb_image,int num_segments,int height,int width);
 
 //==============================
 // The main function, you do not need to make any changes to this function 
@@ -137,7 +135,7 @@ int main(int argc,char **argv) {
             labeled_image[i][j] = 0;
           }
         }
-        int segments = component_labeling(binary, labeled_image, height, width); 
+        int segments = component_labeling(binary, labeled_image, height, width);
         cout<<"Segments found: "<< segments << endl;
         //replace 3D input image with 0 to be used as output.
         for(int i=0;i<height;i++){

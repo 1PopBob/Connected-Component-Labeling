@@ -1,5 +1,3 @@
-//==============================
-
 #include "queue.h"
 
 // constructor. maxlen must be as large as the total number
@@ -19,17 +17,15 @@ Queue::~Queue() {
 
 // insert a new Location at the end/back of our list   
 void Queue::push(Location loc) {
-   //TODO: --- You complete -- CHECKPOINT 1
-
-
-
+    tail++;
+    contents[tail-1] = loc;
 }
 
 // return and "remove" the oldest Location not already extracted
 Location Queue::pop() {
-   //TODO: --- You complete -- CHECKPOINT 1
-
-  
+    int temp = head;
+    head++;
+    return contents[temp];
 }
 
 // is this Queue empty? (did we extract everything added?)
