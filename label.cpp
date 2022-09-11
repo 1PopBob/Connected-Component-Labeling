@@ -24,6 +24,8 @@ void rgb2gray(unsigned char ***in,unsigned char **out,int height,int width);
 void gray2binary(unsigned char **in,unsigned char **out,int height,int width);
 int component_labeling(unsigned char **binary_image,int **label,int height,int width);
 void label2RGB(int  **labeled_image, unsigned char ***rgb_image,int num_segments,int height,int width);
+bool addToExplored(Location, int*, Location*);
+bool checkDuplicate(Location, const int* size, Location *explored);
 
 //==============================
 // The main function, you do not need to make any changes to this function 
@@ -158,30 +160,36 @@ int main(int argc,char **argv) {
    return 0;
 }
 
-
-//==============================
 //Loop over the 'in' image array and calculate the single 'out' pixel value using the formula
 // GS = 0.2989 * R + 0.5870 * G + 0.1140 * B 
 void rgb2gray(unsigned char ***in,unsigned char **out,int height,int width) {
-
-  //-- TODO: You complete -- CHECKPOINT 2
-
-
-
-
+    for(int i = 0; i < height; i++)
+    {
+        for(int j = 0; j < width; j++)
+        {
+            out[i][j] = (0.2989 * in[i][j][0]) + (0.5870 * in[i][j][1]) + (0.1140 * in[i][j][2]);
+        }
+    }
 }
 
 //==============================
 //Loop over the 'in' gray scale array and create a binary (0,1) valued image 'out'
 //Set the 'out' pixel to 1 if 'in' is above the THRESHOLD (already defined), else 0
 void gray2binary(unsigned char **in,unsigned char **out,int height,int width) {
-
-  //-- TODO: You complete -- CHECKPOINT 3
-
-
-
-
-
+    for(int i = 0; i < height; i++)
+    {
+        for(int j = 0; j < width; j++)
+        {
+            if(in[i][j] > THRESHOLD)
+            {
+                   out[i][j] = 1;
+            }
+            else
+            {
+                out[i][j] = 0;
+            }
+        }
+    }
 }
 
 
@@ -191,16 +199,123 @@ void gray2binary(unsigned char **in,unsigned char **out,int height,int width) {
 //- Should return number of segments or components found
 //- Two disjoint components should not share the same label.
 int component_labeling(unsigned char **binary_image,int **label,int height,int width) {
-
-  //-- TODO: You complete -- CHECKPOINT 4
-
-
-
-
-
-    return 0;//for now
+    Location pixel;
+    pixel.row = 0;
+    pixel.col = 0;
+    Location nextPixel;
+    int components = 0;
+    // expored array size
+    int exploredArraySize = 0;
+    int *size = &exploredArraySize;
+    Location* explored = new Location[height*width];
+    for(int i = 0; i < height; i++)
+    {
+        for(int j = 0; j < width; j++)
+        {
+            label[i][j] = 0;
+        }
+    }
+    /*
+     * For loop to go through whole image
+     * while loop once we find white pixel that continues until queue is exhausted (meaning no white left)
+     * +1 component
+     */
+    for(int i = 0; i < height; i++)
+    {
+        for(int j = 0; j < width; j++)
+        {
+            if(binary_image[i][j] == 1)
+            {
+                pixel.row = i;
+                pixel.col = j;
+                // will not recount segement we found and explored
+                if(checkDuplicate(pixel, size, explored))
+                {
+                    continue;
+                }
+                addToExplored(pixel, size, explored);
+                components++;
+                label[pixel.row][pixel.col] = 1;
+                Queue q(height*width);
+                q.push(pixel);
+                while(!q.is_empty())
+                {
+                    pixel = q.pop();
+                    // north west south east
+                    if(binary_image[pixel.row + 1][pixel.col] == 1)
+                    {
+                        nextPixel.row = pixel.row + 1;
+                        nextPixel.col = pixel.col;
+                        if(addToExplored(nextPixel, size, explored))
+                        {
+                            q.push(nextPixel);
+                            label[nextPixel.row][nextPixel.col] = 1;
+                        }
+                    }
+                    if(binary_image[pixel.row][pixel.col - 1] == 1)
+                    {
+                        nextPixel.row = pixel.row;
+                        nextPixel.col = pixel.col - 1;
+                        if(addToExplored(nextPixel, size, explored))
+                        {
+                            q.push(nextPixel);
+                            label[nextPixel.row][nextPixel.col] = 1;
+                        }
+                    }
+                    if(binary_image[pixel.row - 1][pixel.col] == 1)
+                    {
+                        nextPixel.row = pixel.row - 1;
+                        nextPixel.col = pixel.col ;
+                        if(addToExplored(nextPixel, size, explored))
+                        {
+                            q.push(nextPixel);
+                            label[nextPixel.row][nextPixel.col] = 1;
+                        }
+                    }
+                    if(binary_image[pixel.row][pixel.col + 1] == 1)
+                    {
+                        nextPixel.row = pixel.row;
+                        nextPixel.col = pixel.col + 1;
+                        if(addToExplored(nextPixel, size, explored))
+                        {
+                            q.push(nextPixel);
+                            label[nextPixel.row][nextPixel.col] = 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return components;
 }    
 
+bool addToExplored(Location pixel, int* size, Location* explored)
+{
+    bool add = false;
+    bool dup = checkDuplicate(pixel, size, explored);
+    if(!dup)
+    {
+        explored[*size] = pixel;
+        (*size)++;
+        add = true;
+    }
+    return add;
+}
+
+bool checkDuplicate(Location pixel, const int* size, Location *explored)
+{
+    bool duplicate = false;
+    for(int i = 0; i < *size; i++)
+    {
+        Location temp = explored[i];
+        if(temp.row == pixel.row && temp.col == pixel.col)
+        {
+            duplicate = true;
+            break;
+        }
+    }
+    return duplicate;
+}
 
 //==============================
 //Randomly assign a color (RGB) to each segment or component
