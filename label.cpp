@@ -15,11 +15,9 @@ void usage() {
     cerr << "./label segment <inputfile> <outputfile>" << endl;
 }
 
-//==============================
 //Function prototypes go here
 void test_queue();
 void clean(unsigned char ***input,unsigned char **gray,unsigned char **binary, int **labeled_image,int height , int width);
-//--- TODO: you complete the rest --- CHECKPOINT 0
 void rgb2gray(unsigned char ***in,unsigned char **out,int height,int width);
 void gray2binary(unsigned char **in,unsigned char **out,int height,int width);
 int component_labeling(unsigned char **binary_image,int **label,int height,int width);
@@ -27,7 +25,6 @@ void label2RGB(int  **labeled_image, unsigned char ***rgb_image,int num_segments
 bool addToExplored(Location, int*, Location*);
 bool checkDuplicate(Location, const int* size, Location *explored);
 
-//==============================
 // The main function, you do not need to make any changes to this function 
 // However, we encourage you to try to understand what's going on in the main function
 int main(int argc,char **argv) {
@@ -172,7 +169,6 @@ void rgb2gray(unsigned char ***in,unsigned char **out,int height,int width) {
     }
 }
 
-//==============================
 //Loop over the 'in' gray scale array and create a binary (0,1) valued image 'out'
 //Set the 'out' pixel to 1 if 'in' is above the THRESHOLD (already defined), else 0
 void gray2binary(unsigned char **in,unsigned char **out,int height,int width) {
@@ -192,8 +188,6 @@ void gray2binary(unsigned char **in,unsigned char **out,int height,int width) {
     }
 }
 
-
-//==============================
 //This is the function that does the work of looping over the binary image and doing the connected component labeling
 //See the guide for more detail.
 //- Should return number of segments or components found
@@ -203,7 +197,7 @@ int component_labeling(unsigned char **binary_image,int **label,int height,int w
     pixel.row = 0;
     pixel.col = 0;
     Location nextPixel;
-    int components = 0;
+    int components = 0, current_label = 0;
     // expored array size
     int exploredArraySize = 0;
     int *size = &exploredArraySize;
@@ -235,13 +229,13 @@ int component_labeling(unsigned char **binary_image,int **label,int height,int w
                 }
                 addToExplored(pixel, size, explored);
                 components++;
-                label[pixel.row][pixel.col] = 1;
+                current_label++;
+                label[pixel.row][pixel.col] = current_label;
                 Queue q(height*width);
                 q.push(pixel);
                 while(!q.is_empty())
                 {
                     pixel = q.pop();
-                    // north west south east
                     if(binary_image[pixel.row + 1][pixel.col] == 1)
                     {
                         nextPixel.row = pixel.row + 1;
@@ -249,7 +243,7 @@ int component_labeling(unsigned char **binary_image,int **label,int height,int w
                         if(addToExplored(nextPixel, size, explored))
                         {
                             q.push(nextPixel);
-                            label[nextPixel.row][nextPixel.col] = 1;
+                            label[nextPixel.row][nextPixel.col] = current_label;
                         }
                     }
                     if(binary_image[pixel.row][pixel.col - 1] == 1)
@@ -259,7 +253,7 @@ int component_labeling(unsigned char **binary_image,int **label,int height,int w
                         if(addToExplored(nextPixel, size, explored))
                         {
                             q.push(nextPixel);
-                            label[nextPixel.row][nextPixel.col] = 1;
+                            label[nextPixel.row][nextPixel.col] = current_label;
                         }
                     }
                     if(binary_image[pixel.row - 1][pixel.col] == 1)
@@ -269,7 +263,7 @@ int component_labeling(unsigned char **binary_image,int **label,int height,int w
                         if(addToExplored(nextPixel, size, explored))
                         {
                             q.push(nextPixel);
-                            label[nextPixel.row][nextPixel.col] = 1;
+                            label[nextPixel.row][nextPixel.col] = current_label;
                         }
                     }
                     if(binary_image[pixel.row][pixel.col + 1] == 1)
@@ -279,13 +273,14 @@ int component_labeling(unsigned char **binary_image,int **label,int height,int w
                         if(addToExplored(nextPixel, size, explored))
                         {
                             q.push(nextPixel);
-                            label[nextPixel.row][nextPixel.col] = 1;
+                            label[nextPixel.row][nextPixel.col] = current_label;
                         }
                     }
                 }
             }
         }
     }
+    delete[] explored;
     return components;
 }    
 
@@ -317,61 +312,76 @@ bool checkDuplicate(Location pixel, const int* size, Location *explored)
     return duplicate;
 }
 
-//==============================
 //Randomly assign a color (RGB) to each segment or component
 //No two segments should share the same color.
-void label2RGB(int  **labeled_image, unsigned char ***rgb_image,int num_segments,int height,int width)
+void label2RGB(int **labeled_image, unsigned char ***rgb_image,int num_segments,int height,int width)
 {
-  //-- TODO: You complete -- CHECKPOINT 5
+    int* colors = new int[num_segments];
+    int rgb = 0;
 
-
-
-
-
-
-
+    for(int i = 0; i < num_segments; i++)
+    {
+        colors[i] = rand() % 255 + 1;
+    }
+    int temp = num_segments;
+    for(int k = 0; k < num_segments; k++, temp--)
+    {
+        rgb = rand() % 2;
+        for(int i = 0; i < height; i++)
+        {
+            for(int j = 0; j < width; j++)
+            {
+                if(labeled_image[i][j] == 0)
+                {
+                    rgb_image[i][j][0] = 0;
+                }
+                else if(labeled_image[i][j] == temp)
+                {
+                    rgb_image[i][j][rgb] = colors[k];
+                }
+            }
+        }
+    }
+    delete[] colors;
 }
 
-
-//========= CHECKPOINT 6 ==============
-//fill out this function to delete all of the dynamic arrays created
-//-- these arrays are created in the main function.
 void clean(unsigned char ***input,unsigned char **gray,unsigned char **binary, int **labeled_image,int height , int width) {
     if(input) {
-        //TODO: You complete -- delete allocated input image array here (3D)
-  
-
-
-
+        for(int i = 0; i < height; i++)
+        {
+            for(int j = 0; j < width; j++)
+            {
+                delete[] input[i][j];
+            }
+            delete[] input[i];
+        }
+        delete[] input;
     } 
     if(gray){
-        //TODO: You complete -- delete allocated gray-scale image here (2D)
-      
-
-
-
+        for(int i = 0; i < height; i++)
+        {
+            delete[] gray[i];
+        }
+        delete[] gray;
     }
     if(binary){
-        //TODO: You complete -- delete allocated binary image array here (2D)
-
-
-
-
+        for(int i = 0; i < height; i++)
+        {
+            delete[] binary[i];
+        }
+        delete[] binary;
     }
     if(labeled_image){
-        //TODO: You complete -- delete allocated labeled array here (2D)
-
-
-
-
+        for(int i = 0; i < height; i++)
+        {
+            delete[] labeled_image[i];
+        }
+        delete[] labeled_image;
     }
 }
 
 
-
-//==============================
-//This function is used to test your queue implementation.
-//You do not need to change it
+//This function is used to test queue implementation.
 void test_queue() { 
     // create some locations;
     Location three_one, two_two;
@@ -393,8 +403,3 @@ void test_queue() {
     cout << loc.row << "," << loc.col << endl; // 2 2
     cout << q.is_empty() << endl;           // true
 }
-//----------------
-//----------------
-//----------------
-
-
